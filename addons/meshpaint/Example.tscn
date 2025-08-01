@@ -1,0 +1,95 @@
+[gd_scene load_steps=15 format=3 uid="uid://tv4qrb3artwu"]
+
+[ext_resource type="Script" uid="uid://p7ds4p4xwfws" path="res://addons/meshpaint/MeshPaint_Brush.gd" id="1_11usu"]
+[ext_resource type="Texture2D" uid="uid://b5o8beeyp5elg" path="res://addons/meshpaint/crosshair.png" id="1_rkgrv"]
+[ext_resource type="Script" uid="uid://bw1hc3vujkomj" path="res://addons/meshpaint/PaintableMesh.gd" id="3_6xfwq"]
+[ext_resource type="Script" uid="uid://d1q6siqjkwlnb" path="res://Player.gd" id="4_5qkdr"]
+[ext_resource type="ArrayMesh" uid="uid://cvhdrg4f6o0ti" path="res://addons/meshpaint/UnfoldedCubeTrimesh.obj" id="4_6xfwq"]
+[ext_resource type="Texture2D" uid="uid://bd83a2sb6e4g" path="res://addons/meshpaint/UnfoldedCubeTrimeshLayout.png" id="4_px0xa"]
+[ext_resource type="ArrayMesh" uid="uid://bevf6pkb641mi" path="res://addons/meshpaint/Cube.obj" id="6_6xfwq"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_eikbj"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_a2y2p"]
+size = Vector2(50, 50)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_a2y2p"]
+data = PackedVector3Array(25, 0, 25, -25, 0, 25, 25, 0, -25, -25, 0, 25, -25, 0, -25, 25, 0, -25)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_11usu"]
+albedo_texture = ExtResource("4_px0xa")
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_5qkdr"]
+data = PackedVector3Array(-1.0001, 0, -3, 0.9999, 0, -1, -1.0001, 0, -1, 0.9999, 0, -3, 0.9999, 0, -1, -1.0001, 0, -3, 0.9999, 0, -1, 0.9999, 0, 1, -1.0001, 0, -1, 0.9999, 0, -1, 3, 0, 1, 0.9999, 0, 1, 3, 0, -1, 3, 0, 1, 0.9999, 0, -1, 3, 0, -1, 5, 0, 1, 3, 0, 1, 5, 0, -1, 5, 0, 1, 3, 0, -1, -1.0001, 0, -1, 0.9999, 0, 1, -1.0001, 0, 1, 0.9999, 0, 1, 0.9999, 0, 3, -1.0001, 0, 1, -1.0001, 0, 1, 0.9999, 0, 3, -1.0001, 0, 3, -1.0001, 0, -1, -1.0001, 0, 1, -3, 0, -1, -3, 0, -1, -1.0001, 0, 1, -3, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6xfwq"]
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_6xfwq"]
+data = PackedVector3Array(-1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1, 1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, 1, 1, 1, -1, 1, -1, -1, 1, -1, 1, 1, -1, -1, 1, -1, 1, -1, -1, 1, -1, -1, -1, 1, -1, -1, -1, 1, -1, -1, -1, -1, -1, 1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, 1, 1, 1, -1, 1, -1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, -1, 1, -1, 1, -1, -1, -1, -1, 1, 1, -1, 1, 1, -1, -1, -1, -1, 1, -1, -1)
+
+[node name="Example" type="Node3D"]
+
+[node name="TextureRect" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = ExtResource("1_rkgrv")
+expand_mode = 2
+
+[node name="Player" type="CharacterBody3D" parent="." node_paths=PackedStringArray("CAM", "COLLIDER")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3645, 2.09147)
+script = ExtResource("4_5qkdr")
+CAM = NodePath("Camera3D")
+COLLIDER = NodePath("CollisionShape3D")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_eikbj")
+
+[node name="Camera3D" type="Camera3D" parent="Player"]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.635917, 0.771758, 0, -0.771758, 0.635917, -0.0203514, 3.04815, 2.69896)
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_a2y2p")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Floor"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor/StaticBody3D"]
+shape = SubResource("ConcavePolygonShape3D_a2y2p")
+
+[node name="MeshPaintBrush" type="RayCast3D" parent="."]
+debug_shape_custom_color = Color(1, 0.752941, 0.796078, 1)
+script = ExtResource("1_11usu")
+brush_color = Color(0.684172, 0.33627, 0.598432, 1)
+metadata/_custom_type_script = "uid://p7ds4p4xwfws"
+
+[node name="PaintableMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.512375, -2.64971)
+material_override = SubResource("StandardMaterial3D_11usu")
+mesh = ExtResource("4_6xfwq")
+script = ExtResource("3_6xfwq")
+uv_clamp = true
+metadata/_custom_type_script = "uid://bw1hc3vujkomj"
+
+[node name="StaticBody3D" type="StaticBody3D" parent="PaintableMesh"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PaintableMesh/StaticBody3D"]
+shape = SubResource("ConcavePolygonShape3D_5qkdr")
+
+[node name="PaintableMesh2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0.961, 0.529)
+material_override = SubResource("StandardMaterial3D_6xfwq")
+mesh = ExtResource("6_6xfwq")
+script = ExtResource("3_6xfwq")
+uv_clamp = true
+metadata/_custom_type_script = "uid://bw1hc3vujkomj"
+
+[node name="StaticBody3D" type="StaticBody3D" parent="PaintableMesh2"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PaintableMesh2/StaticBody3D"]
+shape = SubResource("ConcavePolygonShape3D_6xfwq")

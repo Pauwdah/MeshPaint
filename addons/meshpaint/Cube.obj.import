@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bevf6pkb641mi"
+path="res://.godot/imported/Cube.obj-caff1fe4aebc1b8308e70a35745b0162.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Cube.obj-caff1fe4aebc1b8308e70a35745b0162.mesh"]
+
+source_file="res://addons/meshpaint/Cube.obj"
+dest_files=["res://.godot/imported/Cube.obj-caff1fe4aebc1b8308e70a35745b0162.mesh", "res://.godot/imported/Cube.obj-caff1fe4aebc1b8308e70a35745b0162.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
