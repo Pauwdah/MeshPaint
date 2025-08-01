@@ -2,13 +2,16 @@
 class_name MeshPaintBrush
 extends RayCast3D
 
-static var singleton
+
+static var isInTree: bool = false
 ## The brush that is used.
-static var brush: Image = Image.new()
+static var brush: Image
 static var rect: Rect2i
 ## The path to your brush in the [color=#AAFFFF][b]res://[/b][/color] folder.
-@export var brush_path: String = "res://addons/meshpaint/brushes/brush.png"
-# @export var brush_format: Image.Format = Image.FORMAT_RGBA8
+@export var brush_texture: Texture2D = preload("res://addons/meshpaint/brushes/brush.png")
+
+# @export var froce_brush_format: bool = false
+# @export var forced_brush_format: Image.Format = Image.FORMAT_RGBA8
 
 @export var brush_color: Color
 
@@ -16,6 +19,7 @@ static var rect: Rect2i
 	set(value):
 		brush_size = value
 		_brushSize = value
+		_resize_brush(value)
 ## Squared brush size that is used.
 static var _brushSize: int = 64
 ## If enabled, [color=#AAFFFF][b]brush_path[/b][/color] is seen as a texture atlas.
@@ -37,14 +41,30 @@ var paintable_mesh: PaintableMesh
 var collisionPoint: Vector3
 var collisionFaceIndex: int
 
+
+func _enter_tree() -> void:
+	if MeshPaintBrush.isInTree:
+		printerr("MESHPAINT: Only 1 Brush can be in Tree. Deleting surplus.")
+		queue_free()
+	else:
+		isInTree = true
+
+func _exit_tree() -> void:
+	isInTree = false
+
+
 func _ready():
-	debug_shape_thickness = 2
-	debug_shape_custom_color = Color.PINK
+	if !Engine.is_editor_hint():
+		debug_shape_thickness = 2
+		debug_shape_custom_color = Color.PINK
 
-	singleton = self
+		
+		_load_brush()
+		_create_brush_rect()
 
-	_load_brush()
-	_create_brush_rect()
+		print_rich(str(
+			MeshPaint.title, "Brush ready."
+		))
 
 
 func _process(delta):
@@ -63,14 +83,23 @@ func _cast_ray_from_camera_to_mouse_pos():
 
 	
 func _load_brush():
-	var _load: Texture2D = load(brush_path)
-	brush = _load.get_image()
-	brush.resize(_brushSize, _brushSize, Image.INTERPOLATE_BILINEAR)
+	brush = Image.new()
+	brush = brush_texture.get_image()
+	brush.decompress()
+	_resize_brush(_brushSize)
 
+
+func _resize_brush(newSize: int):
+	if brush != null:
+		print(str(
+			"Brush Format: ", brush.get_format()
+		))
+		brush.resize(newSize, newSize, Image.INTERPOLATE_BILINEAR)
+		
 
 func _create_brush_rect():
-	var rectSize = brush.get_height() / 2
-	rect = Rect2i(Vector2i(rectSize, rectSize), Vector2i(rectSize, rectSize))
+	var rectSize = brush.get_height()
+	rect = Rect2i(Vector2i(0, 0), Vector2i(rectSize, rectSize))
 	
 
 static func randomize_atlas_brush(): # choose a random sprite from my 2x2 atlas texture
@@ -86,15 +115,9 @@ func _paint_if_mesh_hit():
 	if is_colliding() && get_collider().is_in_group("PaintableMeshCollider"):
 		#
 		paintable_mesh = get_collider().get_parent()
-		# print(str(
-		# 	"Paintable Mesh: ", paintable_mesh.name
-		# ))
-		
 
 		var uv_point = paintable_mesh.get_uv_coord_by_collision_point(get_collision_point(), get_collision_face_index())
-		print(str(
-			"UV Point: ", uv_point
-		))
+		
 		if uv_point == null:
 			return
 		paintable_mesh.paint(uv_point, brush_color)

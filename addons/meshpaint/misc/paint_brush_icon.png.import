@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5o8beeyp5elg"
-path="res://.godot/imported/crosshair.png-c7f94d74ac7a8b91d7b8c3eaa908d71d.ctex"
+uid="uid://30faxm0pmmew"
+path="res://.godot/imported/paint_brush_icon.png-e3d4187a66a4f9e33a331425d231ff63.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/meshpaint/crosshair.png"
-dest_files=["res://.godot/imported/crosshair.png-c7f94d74ac7a8b91d7b8c3eaa908d71d.ctex"]
+source_file="res://addons/meshpaint/misc/paint_brush_icon.png"
+dest_files=["res://.godot/imported/paint_brush_icon.png-e3d4187a66a4f9e33a331425d231ff63.ctex"]
 
 [params]
 

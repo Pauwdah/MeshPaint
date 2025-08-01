@@ -3,6 +3,10 @@ class_name PaintableMesh
 extends MeshInstance3D
 
 
+# Formatting
+
+# Formatting End
+
 @export var paint_on_material: PaintOnMat = PaintOnMat.MATERIAL_OVERRIDE
 ## The texture path relative to [param paint_on_material] e.g. [color=#88FFFF][i]'next_pass/albedo_texture'[/i][/color]
 @export var paint_on_texture_path: String = "albedo_texture"
@@ -12,8 +16,7 @@ extends MeshInstance3D
 @export var uv_flip: UvFlip = UvFlip.DISABLED
 ## Usefull when exported UV's don't fit Godots default.
 @export var uv_negative: UvNegative = UvNegative.DISABLED
-## Clamps the UV Coords to 0-1
-@export var uv_clamp: bool = false
+
 ## Creates an ImageTexture at [param paint_on_texture_path] in [param paint_on_material].
 ## Good if you don't want to make new textures all the time.
 @export var use_fallback_image: bool = true
@@ -73,11 +76,15 @@ var meshtool: MeshDataTool
 func _ready() -> void:
 	#Null Check Assigments
 	if mesh == null:
-		mesh = preload("res://addons/meshpaint/Cube.obj")
+		mesh = preload("res://addons/meshpaint/misc/DefaultCube.obj")
 
 	_init_meshtool()
 	_prepare_texture()
 	_prepare_collider()
+
+	print_rich(str(
+		MeshPaint.title, "PaintableMesh \"", name, "\" ready."
+	))
 
 
 func _prepare_collider():
@@ -87,16 +94,15 @@ func _prepare_collider():
 
 	if collider == null:
 		printerr(str(
-			"PaintableMesh: \"", name, "\" No CollisionObject3D child. (e.g. StaticBody3d, RidgidBody3D)", "\n",
-			"Creating Base"
+			"MESHPAINT: \"", name, "\" No CollisionObject3D child. (e.g. StaticBody3d, RidgidBody3D)",
 		))
-		var staticBody: StaticBody3D = StaticBody3D.new()
-		add_child(staticBody)
-		collider = staticBody
+		# var staticBody: StaticBody3D = StaticBody3D.new()
+		# add_child(staticBody)
+		# collider = staticBody
 
-		var collisionShape: CollisionShape3D = CollisionShape3D.new()
-		staticBody.add_child(collisionShape)
-		collisionShape.shape = mesh.create_convex_shape()
+		# var collisionShape: CollisionShape3D = CollisionShape3D.new()
+		# staticBody.add_child(collisionShape)
+		# collisionShape.shape = mesh.create_convex_shape()
 		
 	# Creating Group for Comparison
 	collider.add_to_group("PaintableMeshCollider")
@@ -118,8 +124,7 @@ func _prepare_texture():
 				paint_image_texture = _create_image_texture_from_texture_2d(paint_texture_2d)
 				if paint_texture_2d == null: # create new
 					printerr(str(
-						"No Texture found at: \"", paint_on_texture_path, "\"", "\n",
-						"Either use Fallback Image or enter valid path.", "\n",
+						"MESHPAINT: No Texture found at: \"", paint_on_texture_path, "\" ", "Either use Fallback Image or enter valid path."
 					))
 
 		PaintOnMat.MATERIAL_OVERLAY:
@@ -128,7 +133,7 @@ func _prepare_texture():
 				set("material_overlay", StandardMaterial3D.new())
 
 			if paint_on_texture_path != "":
-				printerr("No Texture Path specified.")
+				printerr("MESHPAINT: No Texture Path specified.")
 				return
 	
 			if use_fallback_image:
@@ -139,8 +144,7 @@ func _prepare_texture():
 				paint_image_texture = _create_image_texture_from_texture_2d(paint_texture_2d)
 				if paint_texture_2d == null: # create new
 					printerr(str(
-						"No Texture found at: \"", paint_on_texture_path, "\"", "\n",
-						"Either use Fallback Image or enter valid path.", "\n",
+						"MESHPAINT: No Texture found at: \"", paint_on_texture_path, "\" ", "Either use Fallback Image or enter valid path."
 					))
 
 
@@ -148,9 +152,6 @@ func _create_image_texture_from_texture_2d(textureToEdit: Texture2D = ImageTextu
 	## Size from [param paint_on_texture_path] texture
 	var size = textureToEdit.get_size()
 	
-	print(str(
-		"FORMAT: ", image_format
-	))
 	var img = Image.create(size.x, size.y, false, image_format)
 	img.fill(Color(1, 1, 1, 1))
 	
@@ -162,21 +163,16 @@ func paint(uv_point: Vector2, _color: Color = Color.BLACK):
 	var aimed_pixel: Vector2i = Vector2(uv_point.x, uv_point.y) * Vector2(paint_image_texture.get_size())
 
 	aimed_pixel = Vector2i(aimed_pixel.x - 1, aimed_pixel.y - 1) # ensure its not out of bounds
-	
+	aimed_pixel = Vector2i(aimed_pixel.x - MeshPaintBrush.rect.size.x / 2, aimed_pixel.y - MeshPaintBrush.rect.size.y / 2)
 
 	if MeshPaintBrush.is_using_texture_atlas:
 		MeshPaintBrush.randomize_atlas_brush()
 
-	print(
-		str(
-			"brush Format ", MeshPaintBrush.brush.get_format(), "\n",
-			"brush Size: ", MeshPaintBrush.brush.get_size(), "\n",
-			"Rect Size: ", MeshPaintBrush.rect.size, "\n",
-			"UV Point: ", uv_point, "\n",
-			"Aimed Pixel: ", aimed_pixel, "\n",
-		)
-	)
 	
+	print(str(
+		"Brush Size: ", MeshPaintBrush.brush.get_size(), "\n",
+		"Rect Size: ", MeshPaintBrush.rect.size
+	))
 	var paint_image = paint_image_texture.get_image()
 	paint_image.blend_rect(MeshPaintBrush.brush, MeshPaintBrush.rect, Vector2i(aimed_pixel.x, aimed_pixel.y)) # * img & brush need to be same format
 	paint_image_texture.update(paint_image)
@@ -197,27 +193,14 @@ func _init_meshtool():
 	if mesh is ArrayMesh:
 		meshtool.create_from_surface(mesh, 0)
 
-		print(str(
-			"Meshtool Init: ", meshtool
-		))
+		
 	else:
-		printerr("Mesh needs to be of Type ArrayMesh.")
+		printerr("MESHPAINT: Mesh needs to be of Type ArrayMesh.")
 		return
 	
 
 func get_uv_coord_by_collision_point(collision_point: Vector3, normal_index: int):
-	print(str(
-		"Collision Point Global: ", collision_point, "\n",
-		"Collider Face Index: ", normal_index,
-	))
-
 	var local_point = to_local(collision_point)
-
-	print(str(
-		"Collision Point Local: ", local_point, "\n",
-
-	))
-
 
 	if normal_index == null:
 		return Vector2.ZERO
@@ -229,10 +212,6 @@ func get_uv_coord_by_collision_point(collision_point: Vector3, normal_index: int
 
 
 	var bc = Geometry3D.get_triangle_barycentric_coords(local_point, v1, v2, v3)
-	print(str(
-		"Current BC Point: ", bc, "\n",
-		
-	))
 
 	var uv1 = meshtool.get_vertex_uv(meshtool.get_face_vertex(normal_index, 0))
 	var uv2 = meshtool.get_vertex_uv(meshtool.get_face_vertex(normal_index, 1))
@@ -251,9 +230,6 @@ func get_uv_coord_by_collision_point(collision_point: Vector3, normal_index: int
 			uv.x = - uv.x
 			uv.y = - uv.y
 	
-	if uv_clamp:
-		uv = uv.clamp(Vector2.ZERO, Vector2.ONE) # Clamp to [0, 1] to ensure valid uv coords
-
 	match uv_flip:
 		UvFlip.DISABLED:
 			pass
