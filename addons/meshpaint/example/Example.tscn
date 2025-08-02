@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://b5o8beeyp5elg" path="res://addons/meshpaint/example/crosshair.png" id="1_1s8iq"]
 [ext_resource type="Script" uid="uid://d1q6siqjkwlnb" path="res://addons/meshpaint/example/ExampleController.gd" id="2_jk11h"]
-[ext_resource type="Script" uid="uid://p7ds4p4xwfws" path="res://addons/meshpaint/scripts/MeshPaint_Brush.gd" id="3_4t78p"]
+[ext_resource type="Script" uid="uid://p7ds4p4xwfws" path="res://addons/meshpaint/scripts/MeshPaintBrush.gd" id="3_4t78p"]
 [ext_resource type="Texture2D" uid="uid://vjn1ebs5yfwb" path="res://addons/meshpaint/brushes/brush.png" id="5_1yhpm"]
 [ext_resource type="Script" uid="uid://bw1hc3vujkomj" path="res://addons/meshpaint/scripts/PaintableMesh.gd" id="6_n2iuw"]
 
@@ -238,8 +238,7 @@ script = ExtResource("3_4t78p")
 brush_size = 50
 brush_color = Color(0.668288, 0.629715, 0.80344, 1)
 brush_texture = ExtResource("5_1yhpm")
-use_custom_ray = null
+use_custom_ray = false
 ray_length_multiplier = 2.0
-use_custom_input_action = true
-custom_input_action = "rmb"
+use_custom_input_action = false
 metadata/_custom_type_script = "uid://p7ds4p4xwfws"
