@@ -7,6 +7,8 @@ extends RayCast3D
 ############################################################################
 # NOT EXPORTED VARIABLES
 ############################################################################
+
+## Static reference to the [MeshPaintBrush] object instance in the scene tree.
 static var object_instance
 static var isInTree: bool = false
 ## The brush that is used.
@@ -78,6 +80,8 @@ var use_custom_ray: bool = false:
 ############################################
 # GROUP INPUT
 ############################################
+
+## If [code]true[/code], [param custom_input_action] will be used to paint instead of the default [enum Input.MOUSE_BUTTON_LEFT]
 var use_custom_input_action: bool:
 	set(value):
 		use_custom_input_action = value
