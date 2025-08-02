@@ -240,5 +240,6 @@ brush_color = Color(0.668288, 0.629715, 0.80344, 1)
 brush_texture = ExtResource("5_1yhpm")
 use_custom_ray = false
 ray_length_multiplier = 2.0
-use_custom_input_action = false
+use_custom_input_action = true
+custom_input_action = ""
 metadata/_custom_type_script = "uid://p7ds4p4xwfws"

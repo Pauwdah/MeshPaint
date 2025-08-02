@@ -82,7 +82,7 @@ var use_custom_ray: bool = false:
 ############################################
 
 ## If [code]true[/code], [param custom_input_action] will be used to paint instead of the default [enum Input.MOUSE_BUTTON_LEFT]
-var use_custom_input_action: bool:
+var use_custom_input_action: bool = false:
 	set(value):
 		use_custom_input_action = value
 		if Engine.is_editor_hint():
@@ -91,7 +91,7 @@ var use_custom_input_action: bool:
 			send_notify_after_ready()
 		
 	
-static var custom_input_action: String
+static var custom_input_action: String = "ui_select"
 ## Set [code]true[/code] at the end of [method _ready]. [br]
 ## Used to eliminate racing condition of [method Object.notify_property_list_changed]
 static var isReady: bool = false
