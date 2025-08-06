@@ -45,9 +45,10 @@ enum PaintOnMat {
 ############################################################################
 # NOT EXPORTED VARIABLES
 ############################################################################
-
+## 
+var targeted_material: BaseMaterial3D
 ## This is the [ImageTexture] [MeshPaintBrush] will paint on.
-var paint_image_texture: ImageTexture
+var targeted_image_texture: ImageTexture
 ## Collision Object that is used. [br]
 ## E.g.: StaticBody3D, RigidBody3D
 var collider: CollisionObject3D
@@ -61,8 +62,20 @@ var meshtool: MeshDataTool
 
 ## This is the material used for painting.
 var paint_on_material: PaintOnMat = PaintOnMat.MATERIAL_OVERRIDE
-## The texture path relative to [param paint_on_material] e.g. [color=#88FFFF][i]'next_pass/albedo_texture'[/i][/color]
-var paint_on_texture_path: String = "albedo_texture"
+## If [code]true[/code], can use any number of [param next_pass] instances.
+var use_next_pass_instance: bool:
+	set(value):
+		if Engine.is_editor_hint():
+			use_next_pass_instance = value
+			notify_property_list_changed()
+## The targeted next_pass instance, starting at 1. [br]
+## E.g.: [param next_pass] = 1 [br]
+## E.g.: [param next_pass/next_pass] = 2 [br]
+## E.g.: and so on..
+var next_pass_instance: int = 1
+## The property name of the targeted Texture2D relative to [param paint_on_material] & the possible [param next_pass_instance]. [br]
+## E.g.: [param albedo_texture], [param roughness_texture] etc.
+var targeted_texture_property_name: String = "albedo_texture"
 
 
 ############################################
@@ -82,7 +95,7 @@ var uv_negative: UvNegative = UvNegative.DISABLED
 ############################################
 
 
-## This resolution only applies if the given [param paint_on_texture_path] doesn't already have a texture assigned.
+## This resolution only applies if the given [param targeted_texture_property_name] doesn't already have a texture assigned.
 var fallback_resolution: Vector2i = Vector2i(1024, 1024)
 ## Format used by fallback texture. [MeshPaintBrush] [enum Image.Format] & [PaintableMesh] [enum Image.Format] must be the same.
 var fallback_image_format: Image.Format = Image.FORMAT_RGBA8
@@ -108,7 +121,18 @@ func _get_property_list():
 			"hint_string": ",".join(PaintOnMat.keys())
 			})
 		return_array.append(
-			{"name": &"paint_on_texture_path",
+			{"name": &"use_next_pass_instance",
+			"type": TYPE_BOOL,
+			"usage": PROPERTY_USAGE_DEFAULT,
+			})
+		if use_next_pass_instance:
+			return_array.append(
+			{"name": &"next_pass_instance",
+			"type": TYPE_INT,
+			"usage": PROPERTY_USAGE_DEFAULT,
+			})
+		return_array.append(
+			{"name": &"targeted_texture_property_name",
 			"type": TYPE_STRING,
 			"usage": PROPERTY_USAGE_DEFAULT,
 			})
@@ -226,37 +250,58 @@ func _prepare_collider():
 
 
 func _prepare_texture():
-	if paint_on_texture_path == "":
+	if targeted_texture_property_name == "":
 		printerr("MESHPAINT: No Texture Path specified.")
 		return
-	var paint_texture_2d: Texture2D = null
-	match paint_on_material:
-		PaintOnMat.MATERIAL_OVERRIDE:
-			#
-			if material_override == null:
-				set("material_override", StandardMaterial3D.new())
 	
-			paint_texture_2d = material_override.get(paint_on_texture_path)
+	targeted_material = _E_get_existing_mat()
 
-		PaintOnMat.MATERIAL_OVERLAY:
-			#
-			if material_overlay == null:
-				set("material_overlay", StandardMaterial3D.new())
+	if targeted_material == null:
+		printerr("MESHPAINT: No Material or Material Pass found.")
+		return
 	
-			paint_texture_2d = material_overlay.get(paint_on_texture_path)
+	var existing_texture: Texture2D = targeted_material.get(targeted_texture_property_name)
 
-	if paint_texture_2d == null: # create new
-		paint_image_texture = _create_image_texture_from_texture_2d()
+	if existing_texture == null: # create new
+		print_rich(str(
+				MeshPaint.title, "[color=yellow]No Texture found at target. Creating fallback...[/color]"
+			))
+		targeted_image_texture = _create_image_texture_from_texture_2d()
 	else:
-		paint_image_texture = _create_image_texture_from_texture_2d(paint_texture_2d)
+		targeted_image_texture = _create_image_texture_from_texture_2d(existing_texture)
 
+
+func _E_get_existing_mat():
+	var expression: Expression = Expression.new()
+	var command: String = ""
+
+	match paint_on_material:
+			PaintOnMat.MATERIAL_OVERRIDE:
+				command += "material_override"
+			PaintOnMat.MATERIAL_OVERLAY:
+				command += "material_overlay"
+				
+	for i in next_pass_instance:
+		command += ".next_pass"
+		
+	var error = expression.parse(command)
+	if error != OK:
+		print(expression.get_error_text())
+		return
+	
+	return expression.execute([], self)
 
 func _create_image_texture_from_texture_2d(textureToEdit: Texture2D = ImageTexture.create_from_image(Image.create(fallback_resolution.x, fallback_resolution.y, false, fallback_image_format))):
-	## Size from [param paint_on_texture_path] texture
-	var size = textureToEdit.get_size()
+	## Size from [param targeted_texture_property_name] texture
+	var img_from_tex = textureToEdit.get_image()
+	var size_from_tex = textureToEdit.get_size()
 	
-	var img = Image.create(size.x, size.y, false, textureToEdit.get_format())
-	img.fill(Color(1, 1, 1, 1))
+	if img_from_tex.is_compressed():
+		img_from_tex.decompress()
+	
+	
+	var img = Image.create(size_from_tex.x, size_from_tex.y, false, img_from_tex.get_format())
+	# img.fill(Color(0, 0, 0, 0))
 	
 	return ImageTexture.create_from_image(img)
 
@@ -314,7 +359,7 @@ func paint(collision_point: Vector3, face_index: int, _color: Color = Color.BLAC
 	var uv_point = _get_uv_coord_by_collision_point(collision_point, face_index)
 	if uv_point == null:
 			return
-	var aimed_pixel: Vector2i = Vector2(uv_point.x, uv_point.y) * Vector2(paint_image_texture.get_size())
+	var aimed_pixel: Vector2i = Vector2(uv_point.x, uv_point.y) * Vector2(targeted_image_texture.get_size())
 
 	aimed_pixel = Vector2i(aimed_pixel.x - 1, aimed_pixel.y - 1) # ensure its not out of bounds
 	aimed_pixel = Vector2i(aimed_pixel.x - MeshPaintBrush.rect.size.x / 2, aimed_pixel.y - MeshPaintBrush.rect.size.y / 2)
@@ -322,19 +367,12 @@ func paint(collision_point: Vector3, face_index: int, _color: Color = Color.BLAC
 	if MeshPaintBrush.use_texture_atlas:
 		MeshPaintBrush.randomize_atlas_brush()
 
-	var paint_image = paint_image_texture.get_image()
-	# paint_image.blend_rect(MeshPaintBrush.brush, MeshPaintBrush.rect, Vector2i(aimed_pixel.x, aimed_pixel.y)) # * img & brush need to be same format
+	var paint_image = targeted_image_texture.get_image()
 	var color_image = Image.create(MeshPaintBrush.rect.size.x, MeshPaintBrush.rect.size.y, false, Image.FORMAT_RGBA8)
 	color_image.fill(_color)
 	
 	paint_image.blend_rect_mask(color_image, MeshPaintBrush.brush, MeshPaintBrush.rect, Vector2i(aimed_pixel.x, aimed_pixel.y))
 
-	paint_image_texture.update(paint_image)
+	targeted_image_texture.update(paint_image)
 	
-	match paint_on_material:
-		PaintOnMat.MATERIAL_OVERRIDE:
-			material_override.set(paint_on_texture_path, paint_image_texture)
-			# material_override.albedo_texture = paint_image_texture
-		PaintOnMat.MATERIAL_OVERLAY:
-			material_overlay.set(paint_on_texture_path, paint_image_texture)
-			# material_overlay.albedo_texture = paint_image_texture
+	targeted_material.set(targeted_texture_property_name, targeted_image_texture)
